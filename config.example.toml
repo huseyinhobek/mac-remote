@@ -1,0 +1,41 @@
+# Telegram chat ids allowed to control this Mac.
+# Leave empty, start the bot, message it: it replies with your id. Put it here and restart.
+allowed_chat_ids = []
+
+# Apple Shortcuts the bot may run (exact names from the Shortcuts app).
+shortcuts = []
+
+# Folders /file may send from. Hidden files and folders (.env, .git, .ssh) are never sent.
+files = ["~/Desktop", "~/Downloads"]
+
+# Message me when the Mac switches to battery, power returns, or battery drops to this %. 0 = off.
+battery_alert = 20
+
+[ai]
+# "claude": your local Claude Code CLI, uses your Claude login, no extra key.
+# "openai": any OpenAI-compatible API (OpenAI, Groq, Gemini, OpenRouter, ...).
+provider = "claude"
+model = "sonnet"   # haiku is cheaper but misreads short non-English commands
+# base_url = "https://api.groq.com/openai/v1"
+# api_key_env = "AI_API_KEY"   # variable name in .env
+
+[code]
+timeout_minutes = 20
+# rc_permission_mode = "acceptEdits"   # for /rc sessions; default asks you in the app
+# model = "sonnet"   # default: your Claude Code default model
+# Tools Claude may use in /code. Anything else is denied in headless mode.
+# Your Claude Code permission settings (~/.claude/settings.json) also apply.
+allowed_tools = ["Read", "Glob", "Grep", "Edit", "Write",
+                 "Bash(git status:*)", "Bash(git diff:*)", "Bash(git log:*)", "Bash(npm test:*)"]
+
+[code.folders]
+# alias = "path"
+example = "~/Projects/example"
+
+# Named commands. The AI can only pick a name, it never writes a command.
+# confirm = true asks with a Yes/No button first.
+[commands]
+wifi_ip = { run = ["ipconfig", "getifaddr", "en0"] }
+top_cpu = { run = ["ps", "-Arco", "pid,%cpu,%mem,comm"] }
+restart = { run = ["osascript", "-e", 'tell application "System Events" to restart'], confirm = true }
+shutdown = { run = ["osascript", "-e", 'tell application "System Events" to shut down'], confirm = true }
