@@ -1,40 +1,75 @@
-# mac-remote
+<h1 align="center">mac-remote</h1>
 
-Control your Mac from your phone through a Telegram bot. Type what you want ("open Spotify and set volume to 30"), tap a button, or send `/code fix the failing test` to run Claude Code in a project folder.
+<p align="center">
+  <b>Control your Mac from your phone with a Telegram bot.</b><br>
+  Type what you want in plain language, tap a button, or start a Claude Code session on your Mac from anywhere.
+</p>
 
-- **Cheap.** An AI only picks one of a fixed set of tools. No screenshots go to a model, no clicking around. Buttons and slash commands use no AI at all.
-- **No extra keys.** It uses your local [Claude Code](https://claude.com/claude-code) CLI and your existing Claude login. Any OpenAI-compatible API works too.
-- **No open ports.** The bot long-polls Telegram, so it only makes outgoing connections.
-- **Small.** About 550 lines of Python with one dependency (`httpx`).
+<p align="center">
+  <img alt="macOS" src="https://img.shields.io/badge/platform-macOS-black?logo=apple">
+  <img alt="Python" src="https://img.shields.io/badge/python-3.12-3776AB?logo=python&logoColor=white">
+  <img alt="Telegram" src="https://img.shields.io/badge/Telegram-bot-26A5E4?logo=telegram&logoColor=white">
+  <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green">
+</p>
 
-## What it can do
+---
 
-| Tool | How |
-|---|---|
-| Status (battery, RAM, CPU load, disk, uptime) | `/status`, 📊 button |
-| Screenshot, sent to you | `/screenshot`, 📸 button |
-| Volume / mute | `/volume 30`, 🔇 button |
-| Open / quit an app | `/open Spotify`, `/quit Spotify` |
-| Display off / lock | `/lock`, 🔒 button |
-| Run an Apple Shortcut you listed | `/shortcut Play Pause` |
-| Run a command you defined in config | `/run wifi_ip` |
-| Open a link on the Mac | send the link (or share it to the bot) |
-| Send you a file from allowed folders | `/file report.pdf` or a full path |
-| Alert when the Mac goes on battery, power returns, or battery is low | automatic |
-| Claude Code in a chosen folder, result in Telegram | `/code <task>`, `/new`, `/stop` |
-| Claude Code Remote Control in a chosen folder, continue in the Claude app | `/rc`, `/rc stop` |
+You're out, your Mac is at home, and you need it for one thing: send a file, check whether the build finished, mute the music someone left on, message a colleague, or start a coding task. **mac-remote** turns a private Telegram chat into a remote control for your Mac. You get remote access from your iPhone or Android with no open ports, no VPN and no screen sharing.
 
-Anything you type without a slash goes to the AI, which turns it into one or more of these calls. For voice, use your phone keyboard's dictation mic.
+```text
+You:  open Slack and set the volume to 30
+Mac:  Opened Slack
+      🔊 Volume 30
 
-**`/code` or `/rc`?** `/code` is for quick questions: it runs headless and can only use the tools in `[code].allowed_tools`, because it can't ask you mid-run. For real work (a ticket, a long task), use `/rc`. It starts `claude remote-control` in the folder, and you work in the Claude mobile app or claude.ai/code with the full UI, permission prompts and your MCP connectors. The session's code goes through Anthropic, not Telegram. The folder must be trusted first: run `claude` in it once on the Mac.
+You:  /file report.pdf
+Mac:  📎 report.pdf
 
-The power alert has a limit: in a power cut your router is usually down too, so the message arrives when the power and internet come back.
+You:  message Alex on Slack: running 10 minutes late
+Mac:  [screenshot of the drafted message]  Send the Slack message in the screenshot?  ✅ Yes  ✖️ No
+```
 
-Apple Shortcuts are the easy way to add more: build a shortcut (play/pause music, Focus mode, Home scenes), add its name to `shortcuts` in `config.toml`, and the bot can run it.
+## Why mac-remote
 
-## Setup
+- **Cheap to run.** The AI only reads your message and picks one of a fixed set of tools. It never looks at your screen. By default it uses the Claude Code CLI you already have, so there's no extra API key or bill. Buttons and slash commands skip the AI entirely.
+- **Safe by design.** The AI can't write shell commands. It can only choose a tool and fill in typed arguments, and the code checks them. Risky actions wait for your tap.
+- **Nothing exposed.** The bot connects out to Telegram. Your router and firewall stay closed, and there's no server to rent.
+- **Small enough to read.** About 550 lines of Python with one dependency. Fork it and add your own tools in a few lines.
 
-Needs macOS, [uv](https://docs.astral.sh/uv/) (`brew install uv`) and, for the default AI and `/code`, Claude Code installed and logged in.
+| | mac-remote | Screen-reading AI agents | SSH / VNC from your phone |
+|---|---|---|---|
+| Works without opening ports or a VPN | ✅ | depends | ❌ |
+| Cost per command | one short text call, or none | a screenshot to the model at every step | free |
+| Plain-language commands | ✅ | ✅ | ❌ |
+| Easy to use on a phone | ✅ chat + buttons | ✅ | ❌ tiny terminal or screen |
+| Can't run arbitrary commands | ✅ fixed tool set | ❌ | ❌ |
+
+## Features
+
+**Everyday control**
+- 📊 Battery, RAM, CPU load, disk and uptime at a glance
+- 📸 Screenshots sent straight to your chat (they never go to the AI)
+- 🔊 Volume and mute, 🔒 display off / lock
+- 🚀 Open or quit any app
+- ⚡ Run your Apple Shortcuts by name. Anything Shortcuts can do (music, Focus modes, Home scenes, scripts), the bot can do too
+- 🛠 Your own named commands, defined in config, with optional confirmation
+
+**Files and links**
+- 🌐 Send a link, or share one to the bot, and it opens on your Mac
+- 📎 `/file report.pdf` finds a file in the folders you allow and sends it to you. Hidden files like `.env` are never sent
+
+**Messages**
+- 💬 Write a Slack message from your phone. The bot opens the DM, drafts the text and shows you a screenshot. Nothing is sent until you tap Yes
+
+**Coding from your phone**
+- 🧑‍💻 `/code <task>` runs Claude Code headless in a project folder. It updates one progress message as it works (`Edit src/app.ts`) and continues the same session with your follow-ups
+- 📱 `/rc` starts Claude Code **Remote Control** in a folder, so you can keep going in the Claude mobile app or at claude.ai/code with the full interface, permission prompts and your connectors. Your Mac never gets stuck because you forgot to turn Remote Control on before you left
+
+**Peace of mind**
+- 🔌 A message when your Mac switches to battery, when power comes back, and when the battery runs low
+
+## Quick start
+
+You need macOS, [uv](https://docs.astral.sh/uv/) (`brew install uv`) and, for the default AI and the coding commands, [Claude Code](https://claude.com/claude-code) installed and logged in.
 
 1. In Telegram, message [@BotFather](https://t.me/BotFather), send `/newbot`, and copy the token.
 2. Install:
@@ -42,13 +77,60 @@ Needs macOS, [uv](https://docs.astral.sh/uv/) (`brew install uv`) and, for the d
    git clone https://github.com/huseyinhobek/mac-remote && cd mac-remote
    ./install.sh
    ```
-3. Put the token in `.env`.
-4. Run `.venv/bin/python bot.py`, then message your bot. It replies with your chat id. Add the id to `allowed_chat_ids` in `config.toml` and restart.
-5. Edit `config.toml`: your `/code` folders, shortcuts and commands.
-6. Once it works, run it as a service that starts at login and restarts if it crashes:
+3. Paste the token into `.env`.
+4. Run `.venv/bin/python bot.py` and message your bot. It replies with your chat id. Put that id in `allowed_chat_ids` in `config.toml` and restart.
+5. Edit `config.toml` to add your project folders, shortcuts and commands.
+6. Once it works, install it as a login service that also restarts after a crash:
    ```sh
    ./install.sh service
    ```
+
+## Commands
+
+| Command | What it does |
+|---|---|
+| *any text* | The AI turns it into one or more tool calls |
+| a link | Opens it on the Mac |
+| `/status` `/screenshot` `/lock` | Same as the buttons |
+| `/volume 30` | Set volume (no number shows 0–100 buttons) |
+| `/open Safari` `/quit Safari` | Open or quit an app |
+| `/shortcut Name` | Run an Apple Shortcut listed in config |
+| `/run name` | Run a command defined in config |
+| `/file name-or-path` | Send yourself a file |
+| `/code task` · `/new` · `/stop` | Headless Claude Code in a folder |
+| `/rc` · `/rc stop` | Claude Code Remote Control in a folder |
+
+**`/code` or `/rc`?** Use `/code` for quick questions like "where is X in this repo?". It can't stop to ask you anything mid-run, so it only uses the tools in `[code].allowed_tools`. Use `/rc` for real work such as a ticket or a long task. That session's code goes through Anthropic, not Telegram. The folder must be trusted first: run `claude` in it once on the Mac.
+
+## Configuration
+
+Everything personal lives in `config.toml`, which git ignores. A short excerpt:
+
+```toml
+allowed_chat_ids = [123456789]
+shortcuts = ["Play Pause", "Focus Work"]
+files = ["~/Desktop", "~/Downloads"]
+battery_alert = 20
+
+[code.folders]
+website = "~/Projects/website"
+
+[commands]
+wifi_ip = { run = ["ipconfig", "getifaddr", "en0"] }
+restart = { run = ["osascript", "-e", 'tell application "System Events" to restart'], confirm = true }
+```
+
+See [`config.example.toml`](config.example.toml) for every option.
+
+**Prefer an API to the Claude CLI?** Any OpenAI-compatible endpoint works (OpenAI, Groq, Gemini, OpenRouter, ...):
+
+```toml
+[ai]
+provider = "openai"
+base_url = "https://api.groq.com/openai/v1"
+model = "llama-3.3-70b-versatile"
+api_key_env = "AI_API_KEY"   # set AI_API_KEY in .env
+```
 
 ## macOS permissions
 
@@ -56,41 +138,44 @@ Needs macOS, [uv](https://docs.astral.sh/uv/) (`brew install uv`) and, for the d
 |---|---|
 | Bot or `/code` / `/rc` / `/file` folders inside Desktop, Documents or Downloads | Files and Folders for that folder |
 | Screenshot | Screen Recording |
-| Slack messages (types with the keyboard) | Accessibility |
+| Slack messages (typed with the keyboard) | Accessibility |
 | Quit app, `restart` / `shutdown` commands | Automation, asked once per target app |
 | Everything else | none |
 
-When you run the bot from Terminal, macOS grants these permissions to Terminal. The service runs the Python binary directly, so give the permissions to that binary. `./install.sh service` prints its path; in the file picker press Cmd+Shift+G and paste it. Without Screen Recording, screenshots show only the wallpaper. If the service starts but never logs "started", it is waiting on a folder-access prompt: allow it, or turn it on under Files and Folders.
+When you run the bot from Terminal, macOS applies Terminal's permissions. The service runs its own Python binary, so give the permissions to that binary. `./install.sh service` prints its path; in the file picker press Cmd+Shift+G and paste it. Without Screen Recording, screenshots show only the wallpaper. If the service starts but never logs "started", it is waiting on a folder-access prompt: allow it, or turn it on under Files and Folders.
 
-`/lock` only turns the display off. To make that a real lock, set System Settings > Lock Screen > "Require password after screen saver begins or display is turned off" to **Immediately**.
+`/lock` turns the display off. To make that a real lock, set System Settings > Lock Screen > "Require password after screen saver begins or display is turned off" to **Immediately**.
 
-## Keeping the Mac reachable
+## Keeping your Mac reachable
 
-- The bot keeps the Mac from idle-sleeping while it runs (`caffeinate -i`).
-- **A closed MacBook lid** still puts it to sleep. Either leave the lid open or run `sudo pmset -a disablesleep 1` (undo with `0`).
-- **FileVault:** after a restart, the Mac waits at the disk password screen with no network until you log in. Remote restarts and overnight automatic updates can lock you out until you get home. Consider turning off automatic macOS update installs.
+- While it runs, the bot keeps the Mac from idle-sleeping (`caffeinate -i`).
+- **A closed MacBook lid** still puts it to sleep. Keep the lid open, or run `sudo pmset -a disablesleep 1` (undo with `0`).
+- **FileVault:** after a restart, the Mac waits at the disk password screen with no network until someone logs in. Remote restarts and overnight automatic updates can lock you out until you get home. Consider turning off automatic macOS update installs.
+- **Power alerts in a power cut:** your router is usually down too, so the alert arrives once power and internet come back.
 
 ## Security
 
-- Only chat ids in `allowed_chat_ids` are served. Messages from anyone else are ignored.
-- The AI never writes commands. It can only pick a tool name and fill typed arguments, and the code validates them. Commands are predefined lists of arguments, never run through a shell.
-- Commands with `confirm = true` need a Yes tap. Each button works once and expires after 2 minutes.
-- Messages older than 5 minutes are skipped, so nothing queued while the bot was down runs later.
-- Logs go to `logs/` and rotate at 1 MB × 3. The bot token is redacted.
-- **If your Telegram account is taken over, the attacker controls whatever this bot can do**, including `/code`. So turn on Telegram's two-step verification (cloud password), keep `[code].allowed_tools` narrow, and keep in mind that your own Claude Code permission settings also apply.
-- Bot messages, screenshots and `/code` output pass through Telegram's servers. Bot chats are not end-to-end encrypted.
+- Only chat ids listed in `allowed_chat_ids` get a response. Messages from anyone else are ignored.
+- The AI picks from a fixed tool list. Commands are predefined argument lists that never go through a shell.
+- Commands marked `confirm = true` and every Slack send need a Yes tap. Each button works once and expires after 2 minutes.
+- Messages older than 5 minutes are skipped, so nothing queued while the bot was offline runs later.
+- Logs rotate at 1 MB × 3, and the bot token is redacted from them.
+- **Whoever controls your Telegram account controls this bot**, `/code` included. Turn on Telegram's two-step verification (cloud password) and keep `[code].allowed_tools` narrow. Your own Claude Code permission settings also apply.
+- Bot chats are not end-to-end encrypted. Screenshots, files and `/code` output pass through Telegram's servers.
 
-## Config
+## FAQ
 
-See [`config.example.toml`](config.example.toml). To use an API instead of the Claude CLI:
+**Can I control my Mac with my voice?**
+Yes. Tap your phone keyboard's dictation mic and talk. The bot receives text, so there's no speech-to-text service to pay for.
 
-```toml
-[ai]
-provider = "openai"
-base_url = "https://api.groq.com/openai/v1"   # or OpenAI, Gemini, OpenRouter, ...
-model = "llama-3.3-70b-versatile"
-api_key_env = "AI_API_KEY"                    # set AI_API_KEY in .env
-```
+**Do I need to open a port, set up port forwarding or run a VPN?**
+No. The bot long-polls Telegram over an outgoing connection.
+
+**Does it work on Intel Macs?**
+It should. Nothing in it depends on Apple Silicon, but it has been tested on Apple Silicon.
+
+**How do I add my own tool?**
+For most things, build an Apple Shortcut and list its name in `shortcuts`, or add a named command to `[commands]`. For anything else, write one function in `tools.py` and add one line to `TOOLS`.
 
 ## Tests
 
@@ -100,4 +185,4 @@ api_key_env = "AI_API_KEY"                    # set AI_API_KEY in .env
 
 ## License
 
-MIT
+[MIT](LICENSE)
