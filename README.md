@@ -54,11 +54,13 @@ Needs macOS, [uv](https://docs.astral.sh/uv/) (`brew install uv`) and, for the d
 
 | Feature | Permission |
 |---|---|
+| Bot or `/code` / `/rc` / `/file` folders inside Desktop, Documents or Downloads | Files and Folders for that folder |
 | Screenshot | Screen Recording |
+| Slack messages (types with the keyboard) | Accessibility |
 | Quit app, `restart` / `shutdown` commands | Automation, asked once per target app |
 | Everything else | none |
 
-When you run the bot from Terminal, macOS grants these permissions to Terminal. The service runs the Python binary directly, so give the permissions to that binary. `./install.sh service` prints its path. Without Screen Recording, screenshots show only the wallpaper.
+When you run the bot from Terminal, macOS grants these permissions to Terminal. The service runs the Python binary directly, so give the permissions to that binary. `./install.sh service` prints its path; in the file picker press Cmd+Shift+G and paste it. Without Screen Recording, screenshots show only the wallpaper. If the service starts but never logs "started", it is waiting on a folder-access prompt: allow it, or turn it on under Files and Folders.
 
 `/lock` only turns the display off. To make that a real lock, set System Settings > Lock Screen > "Require password after screen saver begins or display is turned off" to **Immediately**.
 
