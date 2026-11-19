@@ -37,11 +37,11 @@ def status():
     disk = shutil.disk_usage("/")
     boot = int(sh("sysctl", "-n", "kern.boottime").split("sec = ")[1].split(",")[0])
     up = int(time.time()) - boot
-    return (f"🔋 {batt}\n"
-            f"🧠 RAM free {ram}\n"
-            f"⚙️ Load {os.getloadavg()[0]:.1f} on {os.cpu_count()} cores\n"
-            f"💾 Disk {disk.free / 2**30:.0f} GB free of {disk.total / 2**30:.0f} GB\n"
-            f"⏱ Up {up // 86400}d {up % 86400 // 3600}h")
+    return (f"Battery  {batt}\n"
+            f"Memory  {ram} free\n"
+            f"CPU load  {os.getloadavg()[0]:.1f} on {os.cpu_count()} cores\n"
+            f"Disk  {disk.free / 2**30:.0f} GB free of {disk.total / 2**30:.0f} GB\n"
+            f"Uptime  {up // 86400}d {up % 86400 // 3600}h")
 
 
 def screenshot():
@@ -57,7 +57,7 @@ def open_url(url):
     if not re.match(r"https?://", url):
         raise RuntimeError("only http(s) links")
     sh("open", url)
-    return "🌐 Opened"
+    return "Opened the link"
 
 
 def _file_roots():
@@ -130,7 +130,7 @@ def slack_send():
     sh("open", "-a", "Slack")
     time.sleep(1)
     _keys("key code 36")
-    return "📨 Sent"
+    return "Sent"
 
 
 def parse_power(out):
@@ -145,7 +145,7 @@ def power():
 def set_volume(level):
     level = max(0, min(100, level))
     sh("osascript", "-e", f"set volume output volume {level}")  # level is an int
-    return f"🔊 Volume {level}"
+    return f"Volume {level}"
 
 
 def open_app(name):
@@ -162,7 +162,7 @@ def quit_app(name):
 
 def lock_screen():
     sh("pmset", "displaysleepnow")
-    return "🔒 Display off"
+    return "Display off"
 
 
 def run_shortcut(name):

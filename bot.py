@@ -21,9 +21,9 @@ ROOT = Path(__file__).resolve().parent
 MAX_AGE = 300      # skip messages that queued up while the bot was down
 CONFIRM_TTL = 120  # seconds a confirm button stays valid
 
-BUTTONS = {"📊 Status": ("status", {}), "📸 Screenshot": ("screenshot", {}),
-           "🔇 Mute": ("set_volume", {"level": 0}), "🔒 Lock": ("lock_screen", {})}
-KEYBOARD = {"keyboard": [["📊 Status", "📸 Screenshot"], ["🔇 Mute", "🔒 Lock"]],
+BUTTONS = {"Status": ("status", {}), "Screenshot": ("screenshot", {}),
+           "Mute": ("set_volume", {"level": 0}), "Lock": ("lock_screen", {})}
+KEYBOARD = {"keyboard": [["Status", "Screenshot"], ["Mute", "Lock"]],
             "resize_keyboard": True, "is_persistent": True}
 SLASH = {"/status": ("status", None), "/screenshot": ("screenshot", None), "/lock": ("lock_screen", None),
          "/volume": ("set_volume", "level"), "/open": ("open_app", "name"), "/quit": ("quit_app", "name"),
@@ -169,7 +169,7 @@ class Bot:
         nonce = secrets.token_urlsafe(8)
         self.pending[nonce] = (calls, now + CONFIRM_TTL)
         self.tg.send(chat, f"Confirm: {', '.join(risky)}?", reply_markup={"inline_keyboard": [[
-            {"text": "✅ Yes", "callback_data": f"ok:{nonce}"}, {"text": "✖️ No", "callback_data": f"no:{nonce}"}]]})
+            {"text": "Yes", "callback_data": f"ok:{nonce}"}, {"text": "No", "callback_data": f"no:{nonce}"}]]})
 
     def execute(self, chat, calls):
         out, followups = [], []
@@ -179,7 +179,7 @@ class Bot:
                 res = tools.call(name, args)
             except Exception as e:
                 log.warning("tool failed: %s %s", name, e)
-                out.append(f"❌ {name}: {e}")
+                out.append(f"{name} failed: {e}")
                 continue
             if isinstance(res, tools.Upload):
                 try:
@@ -227,12 +227,12 @@ def watch_power(tg, chats, low):
             ac, pct = tools.power()
             now = time.strftime("%H:%M")
             if last is not None and ac != last:
-                outbox.append(f"🔌 Power back at {now}, battery {pct}%." if ac else
-                              f"⚡ On battery since {now} ({pct}%). Power cut or unplugged?")
+                outbox.append(f"Power is back ({now}). Battery {pct}%." if ac else
+                              f"Running on battery since {now} ({pct}%). Power cut or unplugged?")
             if ac:
                 warned = False
             elif low and pct is not None and pct <= low and not warned:
-                outbox.append(f"🪫 Battery {pct}%. The Mac sleeps when it runs out.")
+                outbox.append(f"Battery at {pct}%. The Mac will sleep when it runs out.")
                 warned = True
             last = ac
         except Exception as e:
@@ -285,7 +285,7 @@ def main():
                 chat = (u.get("message") or u.get("callback_query", {}).get("message") or {}).get("chat", {}).get("id")
                 if chat in bot.allowed:
                     try:
-                        tg.send(chat, f"❌ {e}")
+                        tg.send(chat, f"Error: {e}")
                     except Exception:
                         pass
 

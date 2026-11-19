@@ -57,7 +57,7 @@ class CodeRunner:
         if alias not in self.folders:
             return
         self.folder = alias
-        self.tg("editMessageText", chat_id=chat, message_id=msg_id, text=f"📁 {alias}")
+        self.tg("editMessageText", chat_id=chat, message_id=msg_id, text=f"Folder: {alias}")
         task, self.waiting = self.waiting, None
         if task:
             self.start(chat, task)
@@ -100,7 +100,7 @@ class CodeRunner:
 
     def _watch(self, chat, proc, folder):
         t0 = time.time()
-        msg = self.tg.send(chat, f"⏳ {folder}: started")["message_id"]
+        msg = self.tg.send(chat, f"{folder}: started")["message_id"]
         timer = threading.Timer(self.timeout, self._kill, [proc])
         timer.start()
         last_edit, result, noise = 0.0, None, []
@@ -118,17 +118,17 @@ class CodeRunner:
             if step and time.time() - last_edit > 5:
                 last_edit = time.time()
                 try:
-                    self.tg("editMessageText", chat_id=chat, message_id=msg, text=f"⏳ {folder} · {_mmss(t0)} · {step}")
+                    self.tg("editMessageText", chat_id=chat, message_id=msg, text=f"{folder} · {_mmss(t0)} · {step}")
                 except Exception:
                     pass  # progress is best-effort
         proc.wait()
         timer.cancel()
         if result:
-            head, text = ("❌" if result.get("is_error") else "✅"), (result.get("result") or "(no output)")
+            head, text = ("Failed" if result.get("is_error") else "Done"), (result.get("result") or "(no output)")
         else:
-            head, text = "⏹", "\n".join(noise) or f"Stopped (exit {proc.returncode})."
+            head, text = "Stopped", "\n".join(noise) or f"Stopped (exit {proc.returncode})."
         try:
-            self.tg("editMessageText", chat_id=chat, message_id=msg, text=f"{head} {folder} · {_mmss(t0)}")
+            self.tg("editMessageText", chat_id=chat, message_id=msg, text=f"{head} · {folder} · {_mmss(t0)}")
         except Exception:
             pass
         self.tg.send(chat, text)
@@ -153,15 +153,15 @@ class RemoteControl:
             return self.stop(chat)
         if not self.folders:
             return self.tg.send(chat, "No folders in config.toml [code.folders].")
-        rows = [[{"text": ("🟢 " if self._pids(a) else "") + a, "callback_data": f"rc:{a}"}] for a in self.folders]
+        rows = [[{"text": a + (" (on)" if self._pids(a) else ""), "callback_data": f"rc:{a}"}] for a in self.folders]
         self.tg.send(chat, "Start Remote Control in:", reply_markup={"inline_keyboard": rows})
 
     def start(self, chat, alias, msg_id):
         if alias not in self.folders:
             return
-        self.tg("editMessageText", chat_id=chat, message_id=msg_id, text=f"📁 {alias}")
+        self.tg("editMessageText", chat_id=chat, message_id=msg_id, text=f"Folder: {alias}")
         if self._pids(alias):
-            return self.tg.send(chat, f"🟢 {alias} is already on. Open the Claude app, or /rc stop.")
+            return self.tg.send(chat, f"{alias} is already on. Open the Claude app, or /rc stop.")
         cmd = ["claude", "remote-control", "--name", f"mac-remote:{alias}"]
         if self.mode:
             cmd += ["--permission-mode", self.mode]
@@ -180,13 +180,13 @@ class RemoteControl:
             text = ANSI.sub("", out.read_text(errors="replace")) if out.exists() else ""
             m = RC_URL.search(text)
             if m:
-                self.tg.send(chat, f"🟢 {alias}: Remote Control is on. Open it in the Claude app or {m.group(0)}")
+                self.tg.send(chat, f"{alias}: Remote Control is on. Open it in the Claude app or {m.group(0)}")
                 proc.wait()
-                return self.tg.send(chat, f"⏹ {alias}: Remote Control stopped.")
+                return self.tg.send(chat, f"{alias}: Remote Control stopped.")
             if proc.poll() is not None:
                 tail = [l.strip() for l in text.replace("\r", "\n").splitlines() if l.strip()][-5:]
-                return self.tg.send(chat, f"❌ {alias}: " + ("\n".join(tail) or "exited"))
-        self.tg.send(chat, f"⚠️ {alias}: no link after 90 s, see {out}")
+                return self.tg.send(chat, f"{alias} failed: " + ("\n".join(tail) or "exited"))
+        self.tg.send(chat, f"{alias}: no link after 90 s, see {out}")
 
     def stop(self, chat):
         pids = self._pids()
