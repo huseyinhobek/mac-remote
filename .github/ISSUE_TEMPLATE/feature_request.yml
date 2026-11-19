@@ -1,0 +1,16 @@
+name: Feature request
+description: A new tool or an improvement.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: What you want to do from your phone
+      description: Describe the situation, not only the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: How it could work
+      description: Could an Apple Shortcut or a command in config.toml already cover it?
