@@ -133,6 +133,15 @@ def slack_send():
     return "Sent"
 
 
+TRANSCRIBER = Path(__file__).resolve().parent / ".venv" / "bin" / "transcribe"  # built by install.sh
+
+
+def transcribe(path, language=""):
+    if not TRANSCRIBER.exists():
+        raise RuntimeError("voice messages need macOS 26 or later and ./install.sh to build the transcriber")
+    return sh(str(TRANSCRIBER), path, language, timeout=180)
+
+
 def parse_power(out):
     m = re.search(r"(\d+)%", out)
     return "AC Power" in out, int(m.group(1)) if m else None

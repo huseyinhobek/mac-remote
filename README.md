@@ -30,7 +30,7 @@ It runs on your Mac. Nothing is exposed to the internet, and nothing is billed p
 
 The bot works out what you mean, then does it with a small set of tools it trusts. It never guesses a shell command. For anything that matters, it asks first.
 
-Voice works too. Tap the dictation key on your phone's keyboard and speak.
+Or just say it. Send a voice message and your Mac turns it into text with the on-device dictation model built into macOS. There's no speech service to sign up for and no key to manage.
 
 <br>
 
@@ -73,7 +73,7 @@ Start real work on your Mac from your phone.
 
 ## Get started
 
-You need a Mac, [uv](https://docs.astral.sh/uv/) (`brew install uv`) and [Claude Code](https://claude.com/claude-code), installed and signed in.
+You need a Mac, [uv](https://docs.astral.sh/uv/) (`brew install uv`) and [Claude Code](https://claude.com/claude-code), installed and signed in. Voice messages also need macOS 26 or later and the Xcode Command Line Tools (`xcode-select --install`).
 
 **1. Create your bot.** In Telegram, message [@BotFather](https://t.me/BotFather), send `/newbot` and copy the token.
 
@@ -102,6 +102,7 @@ cd mac-remote
 | | |
 |---|---|
 | Plain text | Do it |
+| A voice message | Transcribe it on the Mac, then do it |
 | A link | Open it on the Mac |
 | `/status` · `/screenshot` · `/lock` | Same as the buttons |
 | `/volume 30` | Set the volume. Without a number, shows a picker |

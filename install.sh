@@ -15,6 +15,12 @@ setup)
   # uv-managed Python has a fixed path, so macOS permissions survive Homebrew upgrades
   uv venv --python 3.12 .venv
   uv pip install --python .venv/bin/python -r requirements.txt
+  # Voice messages: a small Swift tool using macOS's on-device dictation model (macOS 26+)
+  if command -v swiftc >/dev/null && swiftc -O -parse-as-library transcribe.swift -o .venv/bin/transcribe 2>/dev/null; then
+    echo "Voice messages: on"
+  else
+    echo "Voice messages: off (needs macOS 26 or later and the Xcode Command Line Tools)"
+  fi
   [ -f .env ] || { cp .env.example .env; chmod 600 .env; }
   [ -f config.toml ] || cp config.example.toml config.toml
   echo "Next: put your bot token in .env, then run: .venv/bin/python bot.py"

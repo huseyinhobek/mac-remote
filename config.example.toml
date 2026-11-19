@@ -11,6 +11,9 @@ files = ["~/Desktop", "~/Downloads"]
 # Message me when the Mac switches to battery, power returns, or battery drops to this %. 0 = off.
 battery_alert = 20
 
+# Language of your voice messages, like "en-US" or "tr-TR". Empty uses the Mac's language.
+voice_language = ""
+
 [ai]
 # "claude": your local Claude Code CLI, uses your Claude login, no extra key.
 # "openai": any OpenAI-compatible API (OpenAI, Groq, Gemini, OpenRouter, ...).

@@ -4,9 +4,10 @@ import logging.handlers
 import os
 import re
 import secrets
-import threading
 import subprocess
 import sys
+import tempfile
+import threading
 import time
 import tomllib
 from pathlib import Path
@@ -38,7 +39,7 @@ Send a link: it opens on the Mac.
 /new: fresh Claude session · /stop: stop the running job
 /rc: start Remote Control in a folder, continue in the Claude app · /rc stop
 
-Voice: use your phone keyboard's dictation mic."""
+Voice: send a voice message. It is transcribed on this Mac."""
 
 log = logging.getLogger("mac-remote")
 
@@ -73,6 +74,7 @@ def load_env(path):
 class Telegram:
     def __init__(self, token):
         self.url = f"https://api.telegram.org/bot{token}/"
+        self.file_url = f"https://api.telegram.org/file/bot{token}/"
         self.http = httpx.Client(timeout=70)
 
     def __call__(self, method, files=None, **params):
@@ -84,6 +86,11 @@ class Telegram:
         if not d.get("ok"):
             raise RuntimeError(f"{method}: {d.get('description')}")
         return d["result"]
+
+    def download(self, file_id, dest):
+        r = self.http.get(self.file_url + self("getFile", file_id=file_id)["file_path"])
+        r.raise_for_status()
+        Path(dest).write_bytes(r.content)
 
     def send(self, chat, text, **kw):
         text = text or "(empty)"
@@ -117,8 +124,13 @@ class Bot:
             log.info("skipped stale message")
             return
         text = (m.get("text") or "").strip()
+        voice = m.get("voice") or m.get("audio")
+        if not text and voice:
+            text = self.hear(chat, voice)
+            if not text:
+                return
         if not text:
-            return self.tg.send(chat, "Text only. For voice, use your phone keyboard's dictation mic.")
+            return self.tg.send(chat, "Send text or a voice message.")
         log.info("in: %s", text)
         if text in BUTTONS:
             return self.run(chat, [BUTTONS[text]])
@@ -134,6 +146,22 @@ class Bot:
             self.run(chat, calls)
         else:
             self.tg.send(chat, raw.get("reply") or "Nothing to do.")
+
+    def hear(self, chat, voice):
+        if voice.get("file_size", 0) > 20 * 2**20:  # the Bot API only downloads up to 20 MB
+            self.tg.send(chat, "That recording is too long.")
+            return None
+        self.tg("sendChatAction", chat_id=chat, action="typing")
+        fd, path = tempfile.mkstemp(suffix=".ogg")
+        os.close(fd)
+        try:
+            self.tg.download(voice["file_id"], path)
+            text = tools.transcribe(path, self.cfg.get("voice_language", ""))
+        finally:
+            os.unlink(path)
+        log.info("heard: %s", text)
+        self.tg.send(chat, f"Heard: {text}" if text else "I couldn't make out any words.")
+        return text
 
     def command(self, chat, text):
         cmd, _, arg = text.partition(" ")
