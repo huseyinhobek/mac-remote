@@ -1,6 +1,6 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/hero-dark.svg">
-  <img alt="mac-remote. Your Mac. From anywhere. A phone chat that opens Slack, sends a file and starts Claude Code Remote Control." src="assets/hero-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/hero-dark.png">
+  <img alt="mac-remote. Your Mac. From anywhere. An iPhone chat with the bot: opening Safari, checking the battery and starting Claude Code Remote Control." src="assets/hero-light.png">
 </picture>
 
 <p align="center">
