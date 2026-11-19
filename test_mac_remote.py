@@ -73,3 +73,19 @@ assert "ask_claude" not in tools.available()
 tools.CFG["ask"] = {"allowed_tools": ["mcp__x__read"]}
 assert "ask_claude" in tools.available()
 print("ok 4")
+# Janitor: due messages are deleted, later ones and failed ones stay queued
+import json as _json
+from bot import Janitor
+calls = []
+class _TG:
+    def __call__(self, method, **kw):
+        calls.append(kw["message_id"])
+        if kw["message_id"] == 3:
+            raise RuntimeError("network down")
+q = root / "q.json"
+j = Janitor(_TG(), q)
+j.add(1, [1, 3], 0)
+j.add(1, [2], 60)
+j.sweep()
+assert calls == [1, 3] and sorted(i["id"] for i in _json.loads(q.read_text())) == [2, 3]
+print("ok 5")

@@ -1,4 +1,5 @@
 """mac-remote: control your Mac from Telegram. Outbound long polling only, no open ports."""
+import json
 import logging
 import logging.handlers
 import os
@@ -92,11 +93,54 @@ class Telegram:
         r.raise_for_status()
         Path(dest).write_bytes(r.content)
 
-    def send(self, chat, text, **kw):
+    def send(self, chat, text, ids=None, **kw):
         text = text or "(empty)"
         for i in range(0, len(text), 4000):  # Telegram caps a message at 4096 chars
             msg = self("sendMessage", chat_id=chat, text=text[i:i + 4000], **kw)
+            if ids is not None:
+                ids.append(msg["message_id"])
         return msg
+
+
+class Janitor:
+    """Deletes messages later. The queue lives in a file, so a restart doesn't forget it."""
+
+    def __init__(self, tg, path):
+        self.tg, self.path, self.lock = tg, path, threading.Lock()
+
+    def _load(self):
+        try:
+            return json.loads(self.path.read_text())
+        except (OSError, ValueError):
+            return []
+
+    def add(self, chat, ids, minutes):
+        with self.lock:
+            q = self._load() + [{"chat": chat, "id": i, "at": time.time() + minutes * 60} for i in ids]
+            self.path.write_text(json.dumps(q))
+
+    def sweep(self):
+        with self.lock:
+            q, keep = self._load(), []
+            for item in q:
+                if item["at"] > time.time():
+                    keep.append(item)
+                    continue
+                try:
+                    self.tg("deleteMessage", chat_id=item["chat"], message_id=item["id"])
+                except Exception as e:
+                    if "not found" not in str(e) and "can't be deleted" not in str(e):
+                        keep.append(item)  # network trouble: try again next sweep
+            if len(keep) != len(q):
+                self.path.write_text(json.dumps(keep))
+
+    def loop(self):
+        while True:
+            time.sleep(30)
+            try:
+                self.sweep()
+            except Exception as e:
+                log.warning("cleanup failed: %s", e)
 
 
 class Bot:
@@ -106,6 +150,9 @@ class Bot:
         self.pending = {}  # nonce -> (calls, expires_at)
         self.runner = CodeRunner(cfg, tg)
         self.rc = RemoteControl(cfg, tg)
+        self.janitor = Janitor(tg, ROOT / "logs" / "delete-queue.json")
+        self.ask_ttl = cfg.get("ask", {}).get("delete_after_minutes", 60)
+        self.trail = []  # ids of the current request's messages, deleted with an ask_claude answer
 
     def handle(self, u):
         if "callback_query" in u:
@@ -123,6 +170,7 @@ class Bot:
         if time.time() - m["date"] > MAX_AGE:
             log.info("skipped stale message")
             return
+        self.trail = [m["message_id"]]
         text = (m.get("text") or "").strip()
         voice = m.get("voice") or m.get("audio")
         if not text and voice:
@@ -160,7 +208,7 @@ class Bot:
         finally:
             os.unlink(path)
         log.info("heard: %s", text)
-        self.tg.send(chat, f"Heard: {text}" if text else "I couldn't make out any words.")
+        self.tg.send(chat, f"Heard: {text}" if text else "I couldn't make out any words.", ids=self.trail)
         return text
 
     def command(self, chat, text):
@@ -208,6 +256,11 @@ class Bot:
             except Exception as e:
                 log.warning("tool failed: %s %s", name, e)
                 out.append(f"{name} failed: {e}")
+                continue
+            if name == "ask_claude" and self.ask_ttl:
+                ids = list(self.trail)
+                self.tg.send(chat, res, ids=ids)
+                self.janitor.add(chat, ids, self.ask_ttl)
                 continue
             if isinstance(res, tools.Upload):
                 try:
@@ -286,6 +339,7 @@ def main():
     tg = Telegram(token)
     bot = Bot(cfg, tg)
     subprocess.Popen(["caffeinate", "-i", "-w", str(os.getpid())])  # no idle sleep while the bot runs
+    threading.Thread(target=bot.janitor.loop, daemon=True).start()
     if bot.allowed and cfg.get("battery_alert", 20):
         threading.Thread(target=watch_power, args=(tg, bot.allowed, cfg.get("battery_alert", 20)), daemon=True).start()
     tg("setMyCommands", commands=[{"command": c.strip("/"), "description": d} for c, d in [
