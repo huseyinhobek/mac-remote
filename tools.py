@@ -135,7 +135,9 @@ def slack_send():
     return "Sent"
 
 
-ASK_RULES = "Answer briefly, in the user's language. Never mention tools, connectors or their setup."
+ASK_RULES = ("Answer briefly, in the user's language. Never mention tools, connectors or their setup. "
+             "Slack activity for a day: search 'in:#channel on:YYYY-MM-DD' (it includes thread replies the channel "
+             "view hides), then read each thread it touches to the end.")
 
 
 def ask_claude(question):
