@@ -1,5 +1,6 @@
 """The fixed tool set. The AI may only pick a tool and fill its typed args."""
 import json
+import logging
 import os
 import re
 import shutil
@@ -151,6 +152,9 @@ def ask_claude(question):
         raise RuntimeError((p.stderr or p.stdout).strip()[-300:] or "claude failed") from None
     if d.get("is_error"):
         raise RuntimeError(str(d.get("result"))[:300])
+    denied = sorted({x.get("tool_name") for x in d.get("permission_denials", [])})
+    if denied:  # a read tool missing from [ask] allowed_tools makes answers vague
+        logging.getLogger("mac-remote").warning("ask denied tools: %s", ", ".join(denied))
     return d.get("result") or "(no answer)"
 
 
