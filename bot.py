@@ -28,7 +28,7 @@ KEYBOARD = {"keyboard": [["📊 Status", "📸 Screenshot"], ["🔇 Mute", "🔒
 SLASH = {"/status": ("status", None), "/screenshot": ("screenshot", None), "/lock": ("lock_screen", None),
          "/volume": ("set_volume", "level"), "/open": ("open_app", "name"), "/quit": ("quit_app", "name"),
          "/shortcut": ("run_shortcut", "name"), "/run": ("run_command", "name"), "/file": ("send_file", "path")}
-HELP = """Control this Mac. Use the buttons, or just write what you want ("open Spotify and set volume to 30").
+HELP = """Control this Mac. Use the buttons, or just write what you want ("open Safari and set the volume to 30").
 
 /status /screenshot /lock
 /volume 0-100 · /open App · /quit App
