@@ -1,4 +1,5 @@
 """The fixed tool set. The AI may only pick a tool and fill its typed args."""
+import json
 import os
 import re
 import shutil
@@ -133,6 +134,26 @@ def slack_send():
     return "Sent"
 
 
+ASK_RULES = "Answer briefly, in the user's language. Never mention tools, connectors or their setup."
+
+
+def ask_claude(question):
+    """Answer from the user's connected apps with Claude Code. No built-in tools, only the read-only tools in [ask]."""
+    c = CFG["ask"]
+    # shortcut: runs in the poll loop, so other messages wait 10-30 s; move to a thread if that starts to hurt
+    p = subprocess.run(["claude", "-p", "--model", c.get("model", "sonnet"), "--tools", "", "--no-session-persistence",
+                        "--output-format", "json", "--append-system-prompt", ASK_RULES,
+                        "--allowedTools", ",".join(c["allowed_tools"])],
+                       input=question, capture_output=True, text=True, timeout=300, cwd=tempfile.gettempdir())
+    try:
+        d = json.loads(p.stdout)
+    except ValueError:
+        raise RuntimeError((p.stderr or p.stdout).strip()[-300:] or "claude failed") from None
+    if d.get("is_error"):
+        raise RuntimeError(str(d.get("result"))[:300])
+    return d.get("result") or "(no answer)"
+
+
 TRANSCRIBER = Path(__file__).resolve().parent / ".venv" / "bin" / "transcribe"  # built by install.sh
 
 
@@ -193,6 +214,8 @@ TOOLS = {
     "lock_screen": (lock_screen, {}, "turn the display off (locks if a password is required on wake)"),
     "run_shortcut": (run_shortcut, {"name": str}, "run an Apple Shortcut"),
     "run_command": (run_command, {"name": str}, "run a predefined command"),
+    "ask_claude": (ask_claude, {"question": str}, "answer questions that need reading the user's Slack, email or calendar, "
+                   "like summaries or what's next; pass the user's request as the question"),
     "slack_message": (slack_message, {"to": str, "text": str}, "write a Slack DM or channel message; the user confirms before it is sent"),
     "slack_send": (slack_send, {}, "internal"),
 }
@@ -213,6 +236,7 @@ def allowed_names(tool):
 def available():
     return [t for t in TOOLS if t not in INTERNAL and allowed_names(t) != []
             and (t != "send_file" or CFG.get("files"))
+            and (t != "ask_claude" or CFG.get("ask", {}).get("allowed_tools"))
             and (t != "slack_message" or Path("/Applications/Slack.app").exists())]
 
 

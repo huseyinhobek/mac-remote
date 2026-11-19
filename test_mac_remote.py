@@ -68,3 +68,8 @@ assert raises([{"tool": "slack_send", "args": {}}])
 assert tools.needs_confirm("slack_send", {})
 assert tools.FOLLOWUP["slack_message"] == "slack_send"
 print("ok 3")
+# ask_claude only exists when read-only tools are configured
+assert "ask_claude" not in tools.available()
+tools.CFG["ask"] = {"allowed_tools": ["mcp__x__read"]}
+assert "ask_claude" in tools.available()
+print("ok 4")

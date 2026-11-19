@@ -26,6 +26,8 @@ It runs on your Mac. Nothing is exposed to the internet, and nothing is billed p
 >
 > Message Alex on Slack: running ten minutes late.
 >
+> Summarize what was discussed in #design today.
+>
 > Open Safari and turn the volume down to 20.
 
 The bot works out what you mean, then does it with a small set of tools it trusts. It never guesses a shell command. For anything that matters, it asks first.
@@ -43,6 +45,7 @@ Or just say it. Send a voice message and your Mac turns it into text with the on
 | **Apps and sound** | Open or quit any app, set the volume, mute, turn the display off. |
 | **Links** | Send a link, or share one from any app, and it opens on your Mac. |
 | **Files** | Ask for a file by name. It searches the folders you allow and sends it over. |
+| **Ask your apps** | Summaries and answers from your Slack, email and calendar through Claude Code's connectors. It can read only, never send or change anything. |
 | **Slack** | Drafts the message in the right conversation and shows you a screenshot. Nothing is sent until you tap Yes. |
 | **Shortcuts** | Runs your Apple Shortcuts by name, so anything Shortcuts can do, the bot can do. |
 | **Your commands** | Add your own commands to the config file, with an optional confirm step. |

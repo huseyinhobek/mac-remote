@@ -22,6 +22,15 @@ model = "sonnet"   # haiku is cheaper but misreads short non-English commands
 # base_url = "https://api.groq.com/openai/v1"
 # api_key_env = "AI_API_KEY"   # variable name in .env
 
+# Questions answered from your connected apps (Claude Code connectors), read-only.
+# List only tools that read. Claude gets no other tools: no shell, no files, no web.
+[ask]
+model = "sonnet"
+allowed_tools = [
+  # "mcp__claude_ai_Slack__slack_read_channel",
+  # "mcp__claude_ai_Google_Calendar__list_events",
+]
+
 [code]
 timeout_minutes = 20
 # rc_permission_mode = "acceptEdits"   # for /rc sessions; default asks you in the app
